@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLASSIFIED - Access Terminal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: radial-gradient(ellipse at center, #0f0f0f 0%, #0a0a0a 50%, #050505 100%);
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 30%, rgba(0, 255, 65, 0.02) 50%, transparent 70%);
+            animation: backgroundPulse 10s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes backgroundPulse {
+            0%, 100% { transform: translateX(-50%) translateY(-50%); }
+            50% { transform: translateX(50%) translateY(50%); }
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41, 0 0 30px #00ff41;
+            letter-spacing: 2px;
+            animation: textGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes textGlow {
+            0%, 100% { 
+                text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41, 0 0 30px #00ff41;
+                filter: brightness(1);
+            }
+            50% { 
+                text-shadow: 0 0 20px #00ff41, 0 0 30px #00ff41, 0 0 40px #00ff41;
+                filter: brightness(1.2);
+            }
+        }
+
+        .subtitle {
+            color: #808080;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        input[type="password"], input[type="text"] {
+            background: linear-gradient(145deg, #1a1a1a, #151515);
+            border: 1px solid #00ff41;
+            color: #00ff41;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-family: inherit;
+            width: 300px;
+            max-width: 100%;
+            margin: 20px auto;
+            display: block;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        input[type="password"]:focus, input[type="text"]:focus {
+            outline: none;
+            box-shadow: 0 0 20px #00ff4150, inset 0 2px 4px rgba(0, 0, 0, 0.5);
+            transform: scale(1.02);
+            border-color: #00ff41;
+            background: linear-gradient(145deg, #1f1f1f, #1a1a1a);
+        }
+
+        button {
+            background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
+            border: 2px solid #00ff41;
+            color: #00ff41;
+            padding: 12px 30px;
+            font-size: 14px;
+            font-family: inherit;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(0, 255, 65, 0.3);
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            transition: width 0.3s, height 0.3s;
+        }
+
+        button:hover::before {
+            width: 100%;
+            height: 100%;
+        }
+
+        button:hover {
+            background: linear-gradient(145deg, #00ff41, #00cc33);
+            color: #0a0a0a;
+            box-shadow: 0 0 30px #00ff41, inset 0 0 10px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05) translateY(-2px);
+        }
+
+        .error {
+            color: #ff0040;
+            margin-top: 15px;
+            font-size: 14px;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .console {
+            background: linear-gradient(145deg, #0f0f0f, #0a0a0a);
+            border: 2px solid #00ff41;
+            padding: 30px;
+            margin: 20px auto;
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.8;
+            min-height: 300px;
+            max-width: 700px;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.3), inset 0 0 20px rgba(0, 255, 65, 0.05);
+            position: relative;
+            overflow: hidden;
+            border-radius: 3px;
+        }
+
+        .console::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #00ff41, transparent, #00ff41);
+            z-index: -1;
+            opacity: 0.5;
+            filter: blur(10px);
+            animation: borderGlow 3s linear infinite;
+        }
+
+        @keyframes borderGlow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+
+        .console::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+            background: linear-gradient(0deg, transparent 0%, rgba(0, 255, 65, 0.03) 50%, transparent 100%);
+            animation: scanline 8s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+
+        .console-line {
+            margin: 5px 0;
+            opacity: 0;
+            animation: typeIn 0.5s ease-in-out forwards;
+        }
+
+        @keyframes typeIn {
+            to { opacity: 1; }
+        }
+
+        .warning {
+            color: #ff9900;
+        }
+
+        .success {
+            color: #00ff41;
+        }
+
+        .clue-text {
+            font-style: italic;
+            color: #00ff41;
+            font-size: 18px;
+            line-height: 1.6;
+            margin: 30px 0;
+            padding: 20px;
+            border-left: 3px solid #00ff41;
+            background-color: rgba(0, 255, 65, 0.05);
+            text-align: left;
+        }
+
+        .final-message {
+            font-size: 20px;
+            color: #ff69b4;
+            text-shadow: 0 0 20px #ff69b4;
+            margin: 30px 0;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 20px #ff69b4; }
+            50% { text-shadow: 0 0 30px #ff69b4, 0 0 40px #ff69b4; }
+        }
+
+        .heart {
+            display: inline-block;
+            animation: heartbeat 1.5s ease-in-out infinite;
+            color: #ff69b4;
+            font-size: 24px;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .scanning {
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        .scanning span {
+            display: inline-block;
+            animation: blink 1.4s infinite;
+        }
+
+        .scanning span:nth-child(2) { animation-delay: 0.2s; }
+        .scanning span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes blink {
+            0%, 60%, 100% { opacity: 0; }
+            30% { opacity: 1; }
+        }
+
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.1;
+            pointer-events: none;
+        }
+
+        .progress-bar {
+            width: 300px;
+            height: 20px;
+            background-color: #1a1a1a;
+            border: 1px solid #00ff41;
+            margin: 20px auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #00ff41;
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px #00ff41;
+        }
+
+        .info-box {
+            background-color: #0f0f0f;
+            border: 2px solid #00ff41;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 600px;
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.6;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+        }
+
+        .info-box h3 {
+            color: #00ff41;
+            font-size: 16px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .credits {
+            color: #808080;
+            font-size: 12px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+        }
+
+        /* Floating particles effect */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #00ff41;
+            box-shadow: 0 0 6px #00ff41;
+            border-radius: 50%;
+            animation: float 20s linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.4;
+            }
+            90% {
+                opacity: 0.4;
+            }
+            100% {
+                transform: translateY(-100vh) translateX(100px);
+                opacity: 0;
+            }
+        }
+
+        /* Enhanced screen transitions */
+        .screen {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+            position: relative;
+        }
+
+        .screen.active {
+            display: block;
+            animation: slideIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes slideIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(30px) scale(0.95);
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas class="matrix-bg" id="matrix"></canvas>
+    <div class="particles" id="particles"></div>
+    <div class="container">
+        <!-- Password Screen -->
+        <div id="passwordScreen" class="screen active">
+            <h1>◢◤ SECURE TERMINAL ◢◤</h1>
+            <div class="subtitle">ENCRYPTED ACCESS</div>
+            <p>Enter Password to Proceed</p>
+            <input type="password" id="passwordInput" placeholder="••••••••••" autocomplete="off">
+            <button onclick="checkPassword()">[ AUTHENTICATE ]</button>
+            <div id="errorMsg" class="error"></div>
+        </div>
+
+        <!-- Decryption Screen -->
+        <div id="decryptionScreen" class="screen">
+            <div class="console" id="console"></div>
+        </div>
+
+        <!-- Name Input Screen -->
+        <div id="nameScreen" class="screen">
+            <h1>IDENTITY VERIFICATION</h1>
+            <p class="subtitle">Enter your name:</p>
+            <input type="text" id="nameInput" placeholder="Your name" autocomplete="off">
+            <button onclick="submitName()">[ SUBMIT ]</button>
+        </div>
+
+        <!-- Sike Screen -->
+        <div id="sikeScreen" class="screen">
+            <h1 id="sikeText"></h1>
+            <button id="continueBtn" style="display: none;" onclick="showCodenameScreen()">[ CONTINUE ]</button>
+        </div>
+
+        <!-- Codename Screen -->
+        <div id="codenameScreen" class="screen">
+            <h1>OPERATIVE DESIGNATION</h1>
+            <p style="font-size: 18px; margin: 30px 0;">So... do I call you Agent C,<br>or should I call you Dih-tective Chaturya?</p>
+            <button onclick="selectCodename('Agent C')">[ Agent C ]</button>
+            <button onclick="selectCodename('Dih-tective Chaturya')">[ Dih-tective Chaturya ]</button>
+        </div>
+
+        <!-- Permission Screen -->
+        <div id="permissionScreen" class="screen">
+            <h1 style="color: #ff0040; font-size: 48px;">⚠</h1>
+            <p style="font-size: 18px; margin: 30px 0;">Something's not right.<br><br>Permission to scan the room?</p>
+            <button onclick="grantPermission()">[ GRANTED ]</button>
+        </div>
+
+        <!-- Scanning Screen -->
+        <div id="scanningScreen" class="screen">
+            <h1>SCANNING<span class="scanning"><span>.</span><span>.</span><span>.</span></span></h1>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <!-- Clue Screen -->
+        <div id="clueScreen" class="screen">
+            <h1>ANOMALY DETECTED</h1>
+            <div class="clue-text">
+                Inside this sack lies the afterlife of many forests—<br>
+                countless dead trees now whispering their secrets<br>
+                from pressed and silent leaves.
+            </div>
+            <p style="font-size: 18px; font-weight: bold;">Did you get the hint?</p>
+            <button onclick="handleClueResponse('yes')">[ YES ]</button>
+            <button onclick="handleClueResponse('no')">[ NO ]</button>
+        </div>
+
+        <!-- Confirm Screen -->
+        <div id="confirmScreen" class="screen">
+            <h1>CONFIRMATION REQUIRED</h1>
+            <p style="font-size: 18px; margin: 30px 0;">You sure?</p>
+            <button onclick="showFinalScreen()">[ ABSOLUTELY ]</button>
+            <button onclick="showScreen('clueScreen')">[ LET ME THINK AGAIN ]</button>
+        </div>
+
+        <!-- Deeper Scan Screen -->
+        <div id="deeperScanScreen" class="screen">
+            <div class="console">
+                <div class="console-line">Initiating deeper scan...</div>
+                <div class="console-line" style="animation-delay: 1s;">[SCANNING] Environmental analysis in progress</div>
+                <div class="console-line" style="animation-delay: 2s;">[DETECTED] Unusual concentration of printed matter</div>
+                <div class="console-line warning" style="animation-delay: 3s;">[ALERT] Target location identified</div>
+                <div class="console-line success" style="animation-delay: 4s;">[SUCCESS] Analysis complete</div>
+            </div>
+            <div id="deeperHint" style="display: none;">
+                <p style="font-size: 18px; margin: 30px 0; color: #00ff41;">
+                    Dih-tective Chaturya, go around that books of yours at once.
+                </p>
+                <p style="font-size: 16px; font-weight: bold;">Did you get it now?</p>
+                <button onclick="showFinalScreen()">[ YES, FOUND IT! ]</button>
+            </div>
+        </div>
+
+        <!-- Final Screen -->
+        <div id="finalScreen" class="screen">
+            <div style="font-size: 18px; color: #00ff41; margin: 30px 0;">
+                Well, that's a reward for your wit.<br>
+                I really hope you get your soju and flowers thing sorted.
+            </div>
+            
+            <div class="info-box" style="animation-delay: 0.5s;">
+                <h3>[ LATEST INTEL ]</h3>
+                <p style="color: #00ff41;">
+                    In your next mission: building those pretty flowers, Agent Sreekie can assist you as he just finished his 777th mission and the simulation wants to reward him.
+                </p>
+            </div>
+            
+            <div class="credits">
+                <p>Well, Sreekie built this from scratch with the help of his buddies (ChatGPT, Claude AI)</p>
+            </div>
+            
+            <p style="color: #808080; font-size: 14px; margin-top: 30px;">
+                Mission Complete • Gift Located • Simulation Terminated
+            </p>
+            
+            <p style="font-size: 16px; color: #808080; margin: 20px 0; font-style: italic;">
+                nak coding madda raad andi vachina dantlo edo bore kotti itla smh
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Matrix rain effect
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const matrix = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}";
+        const matrixArray = matrix.split("");
+
+        const fontSize = 10;
+        const columns = canvas.width / fontSize;
+
+        const drops = [];
+        for(let x = 0; x < columns; x++) {
+            drops[x] = 1;
+        }
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(10, 10, 10, 0.04)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#00ff41';
+            ctx.font = fontSize + 'px monospace';
+
+            for(let i = 0; i < drops.length; i++) {
+                const text = matrixArray[Math.floor(Math.random() * matrixArray.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(drawMatrix, 35);
+
+        // Password validation
+        const correctPassword = "777";
+        let attempts = 0;
+
+        document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+            if(e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+
+        function checkPassword() {
+            const input = document.getElementById('passwordInput').value;
+            const errorMsg = document.getElementById('errorMsg');
+            
+            if(input === correctPassword) {
+                showScreen('decryptionScreen');
+                startDecryption();
+            } else {
+                attempts++;
+                errorMsg.textContent = `ACCESS DENIED - Invalid Credentials (Attempt ${attempts})`;
+                document.getElementById('passwordInput').value = '';
+                
+                setTimeout(() => {
+                    errorMsg.textContent = '';
+                }, 3000);
+            }
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function startDecryption() {
+            const console = document.getElementById('console');
+            const messages = [
+                { text: "Initializing secure connection...", delay: 0 },
+                { text: "[OK] Connection established", delay: 500 },
+                { text: "Decrypting modules...", delay: 1000 },
+                { text: "▓▓▓▓▓▓▓▓▓▓ 100%", delay: 1500 },
+                { text: "", delay: 1600 },
+                { text: "⚠ Suspicious anomaly detected...", delay: 2500, class: "warning" },
+                { text: "Running identity verification protocol...", delay: 3500 },
+                { text: "", delay: 3600 },
+                { text: "SYSTEM: Before we begin, identify yourself.", delay: 4500, class: "success" }
+            ];
+
+            messages.forEach(msg => {
+                setTimeout(() => {
+                    const line = document.createElement('div');
+                    line.className = 'console-line';
+                    if(msg.class) line.classList.add(msg.class);
+                    line.textContent = msg.text;
+                    console.appendChild(line);
+                }, msg.delay);
+            });
+
+            setTimeout(() => {
+                showScreen('nameScreen');
+            }, 6000);
+        }
+
+        document.getElementById('nameInput').addEventListener('keypress', function(e) {
+            if(e.key === 'Enter') {
+                submitName();
+            }
+        });
+
+        function submitName() {
+            const name = document.getElementById('nameInput').value.trim();
+            if(name) {
+                showScreen('sikeScreen');
+                typewriterEffect();
+            }
+        }
+
+        function typewriterEffect() {
+            const text = "Sike! You really thought the creator didn't know your name already?";
+            const element = document.getElementById('sikeText');
+            let index = 0;
+
+            function type() {
+                if(index < text.length) {
+                    element.textContent += text.charAt(index);
+                    index++;
+                    setTimeout(type, 50);
+                } else {
+                    setTimeout(() => {
+                        document.getElementById('continueBtn').style.display = 'inline-block';
+                    }, 500);
+                }
+            }
+            type();
+        }
+
+        function showCodenameScreen() {
+            showScreen('codenameScreen');
+        }
+
+        let selectedCodename = '';
+
+        function selectCodename(codename) {
+            selectedCodename = codename;
+            showScreen('permissionScreen');
+        }
+
+        function grantPermission() {
+            showScreen('scanningScreen');
+            animateProgressBar();
+        }
+
+        function animateProgressBar() {
+            const fill = document.getElementById('progressFill');
+            let width = 0;
+            
+            const interval = setInterval(() => {
+                width += 2;
+                fill.style.width = width + '%';
+                
+                if(width >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        showScreen('clueScreen');
+                    }, 500);
+                }
+            }, 30);
+        }
+
+        function handleClueResponse(response) {
+            if(response === 'yes') {
+                showScreen('confirmScreen');
+            } else {
+                showScreen('deeperScanScreen');
+                setTimeout(() => {
+                    document.getElementById('deeperHint').style.display = 'block';
+                }, 5000);
+            }
+        }
+
+        function showFinalScreen() {
+            showScreen('finalScreen');
+        }
+
+        // Focus on password input when page loads
+        window.onload = function() {
+            document.getElementById('passwordInput').focus();
+            generateParticles();
+        };
+
+        // Generate floating particles
+        function generateParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+    </script>
+</body>
+</html>
+
